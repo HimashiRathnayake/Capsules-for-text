@@ -3,7 +3,7 @@ import numpy as np
 from collections import Counter
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN, BorderlineSMOTE
 
-from parameters_colab import *
+from colab_parameters import *
 
 def load_data():
   all_data = pd.read_csv(data_path)
