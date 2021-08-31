@@ -1,3 +1,4 @@
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix,precision_recall_fscore_support
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -8,29 +9,11 @@ from tensorflow.keras import utils
 import ensemble_capsule_network
 from config import Config
 from preprocessing import text_preprocessing, load_word_embedding_matrix, generate_embedding_matrix
+from network import get_capsule_network_model
+from methods_colab import load_data, apply_oversampling
+from parameters_colab import *
 
-folder_path =  '/content/drive/My Drive/FYP/Sentiment Analysis/Implementation/'
-
-lankadeepa_data_path = folder_path + 'corpus/new/preprocess_from_isuru/lankadeepa_tagged_comments.csv'
-gossip_lanka_data_path = folder_path + 'corpus/new/preprocess_from_isuru/gossip_lanka_tagged_comments.csv'
-
-EMBEDDING_SIZE = 300
-embedding_type = "fasttext"
-context = 5
-embeds = "fasttext"
-
-# word_embedding_keyed_vectors_path = folder_path + "word_embedding/"+embeds+"/source2_data_from_gosspiLanka_and_lankadeepa/"+str(EMBEDDING_SIZE)+"/keyed_vectors/keyed.kv"
-word_embedding_matrix_path = "/content/drive/MyDrive/FYP/Sentiment Analysis/Implementation/Sentiment Analysis/CNN RNN/embedding_matrix/fasttext_lankadeepa_gossiplanka_300"
-
-lankadeepa_data = pd.read_csv(lankadeepa_data_path)[:9059]
-gossipLanka_data = pd.read_csv(gossip_lanka_data_path)
-gossipLanka_data = gossipLanka_data.drop(columns=['Unnamed: 3'])
-
-word_embedding_path = folder_path
-
-all_data = pd.concat([lankadeepa_data, gossipLanka_data], ignore_index=True)
-all_data['label'] = all_data['label'] - 2
-print(all_data)
+all_data = load_data()
 
 comments_text, labels = text_preprocessing(all_data)
 t = Tokenizer()
@@ -40,38 +23,54 @@ print(vocab_size)
 
 encoded_docs = t.texts_to_sequences(comments_text)
 max_length = 30
+# max_length = len(max(encoded_docs, key=len))
 padded_docs = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
-comment_labels = np.array(labels)
-comment_labels = utils.to_categorical(comment_labels)
 padded_docs = np.array(padded_docs)
+comment_labels = np.array(labels)
+comment_labels = pd.get_dummies(comment_labels).values
 
 print("Shape of all comments: ", padded_docs.shape)
 print("Shape of labels: ", comment_labels.shape)
 
-X_train, X_test, y_train, y_test = train_test_split(padded_docs, comment_labels, test_size=0.1, random_state=42,
+X_train, X_test, Y_train, Y_test = train_test_split(padded_docs, comment_labels, test_size=0.1, random_state=42,
                                                     shuffle=True)
+x_train, x_val, y_train, y_val = train_test_split(padded_docs, comment_labels, test_size=0.1, random_state=42,
+                                                    shuffle=True)
+x_train, y_train = apply_oversampling(x_train, y_train);
+x_test = X_test
+y_test = Y_test
 
 print("Train lables shape: ", y_train.shape)
 
 # generate embedding matrix
-# embedding_matrix = generate_embedding_matrix(word_embedding_keyed_vectors_path, word_embedding_matrix_path, vocab_size,
+# embedding_matrix = generate_embedding_matrix(word_embedding_keydvectors_path, embedding_matrix_path, vocab_size,
 #                                              EMBEDDING_SIZE, t)
 
 # load embedding matrix
-embedding_matrix = load_word_embedding_matrix(word_embedding_matrix_path)
+embedding_matrix = load_word_embedding_matrix(embedding_matrix_path)
 
 # print(embedding_matrix[1])
 config = Config(
     seq_len=max_length,
-    num_classes=4,
+    num_classes=NO_OUTPUT_LAYERS,
     vocab_size=vocab_size,
     embedding_size=EMBEDDING_SIZE,
     dropout_rate=0.8,
-    x_train=X_train,
+    x_train=x_train,
     y_train=y_train,
-    x_test=X_test,
-    y_test=y_test,
+    x_test=x_val,
+    y_test=y_val,
     pretrain_vec=embedding_matrix)
 
 model = ensemble_capsule_network.ensemble_capsule_network(config)
-model.fit(x=X_train, y=y_train, validation_data=(X_test, y_test), epochs=50)
+# model = get_capsule_network_model(config)
+
+model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test), epochs=50)
+
+predictions = model.predict(x_test)
+labels = np.argmax(y_test, axis=1)
+predictions = np.argmax(predictions, axis=1)
+
+# classification_report
+report_print = classification_report(labels, predictions, digits=4)
+print(report_print)
