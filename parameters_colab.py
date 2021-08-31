@@ -5,8 +5,8 @@ technique = "humor" #@param ["humor", "hate speech"]
 EMBEDDING_SIZE = 300 #@param [50, 150, 200, 250, 300, 350, 400, 450, 500]
 embedding_type = "fasttext" #@param ["fasttext","word2vec"]
 experiment_no = "01" #@param [] {allow-input: true}
-over_sampling_technique = "" #@param ["", "ROS","ADASYN", "SMOTE", "BorderlineSMOTE"]
-sampling_strategy = "" #@param [] {allow-input: true}
+over_sampling_technique = "ROS" #@param ["", "ROS","ADASYN", "SMOTE", "BorderlineSMOTE"]
+sampling_strategy = "1" #@param [] {allow-input: true}
 
 # other parameters
 
