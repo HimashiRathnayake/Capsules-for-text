@@ -10,8 +10,8 @@ import ensemble_capsule_network
 from config import Config
 from preprocessing import text_preprocessing, load_word_embedding_matrix, generate_embedding_matrix
 from network import get_capsule_network_model
-from methods_colab import load_data, apply_oversampling
-from parameters_colab import *
+from colab_methods import load_data, apply_oversampling
+from colab_parameters import *
 
 all_data = load_data()
 
@@ -22,8 +22,8 @@ vocab_size = len(t.word_index) + 1
 print(vocab_size)
 
 encoded_docs = t.texts_to_sequences(comments_text)
-max_length = 30
-# max_length = len(max(encoded_docs, key=len))
+# max_length = 30
+max_length = len(max(encoded_docs, key=len))
 padded_docs = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
 padded_docs = np.array(padded_docs)
 comment_labels = np.array(labels)
@@ -62,7 +62,7 @@ config = Config(
     pretrain_vec=embedding_matrix)
 
 model = ensemble_capsule_network.ensemble_capsule_network(config)
-model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=100)
+model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=50)
 
 # validate model
 
