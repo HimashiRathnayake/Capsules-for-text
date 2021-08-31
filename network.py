@@ -200,8 +200,8 @@ def get_model_from_text_layer(self, summary=True):
 
 
 
-w2v = tf.random.normal([30_000, 300])
-config = Config(pretrain_vec=w2v)
-print("Hi")
-model = get_model_from_text_layer(config)
+# w2v = tf.random.normal([30_000, 300])
+# config = Config(pretrain_vec=w2v)
+# print("Hi")
+# model = get_model_from_text_layer(config)
 # print(output_shape[1])
