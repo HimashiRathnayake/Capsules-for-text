@@ -49,7 +49,6 @@ print("Train lables shape: ", y_train.shape)
 # load embedding matrix
 embedding_matrix = load_word_embedding_matrix(embedding_matrix_path)
 
-# print(embedding_matrix[1])
 config = Config(
     seq_len=max_length,
     num_classes=NO_OUTPUT_LAYERS,
@@ -63,9 +62,9 @@ config = Config(
     pretrain_vec=embedding_matrix)
 
 model = ensemble_capsule_network.ensemble_capsule_network(config)
-# model = get_capsule_network_model(config)
+model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=100)
 
-model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test), epochs=50)
+# validate model
 
 predictions = model.predict(x_test)
 labels = np.argmax(y_test, axis=1)
