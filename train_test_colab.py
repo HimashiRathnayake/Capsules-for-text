@@ -74,3 +74,11 @@ predictions = np.argmax(predictions, axis=1)
 # classification_report
 report_print = classification_report(labels, predictions, digits=4)
 print(report_print)
+
+print("Accuracy: ", accuracy_score(labels, predictions))
+print("Precision: ", precision_score(labels, predictions, average='weighted'))
+print("Recall: ", recall_score(labels, predictions, average='weighted'))
+print("F1-Score: ", f1_score(labels, predictions, average='weighted'))
+print("Macro Precision: ", precision_score(labels, predictions, average='macro'))
+print("Macro Recall: ", recall_score(labels, predictions, average='macro'))
+print("Macro F1-Score: ", f1_score(labels, predictions, average='macro'))
