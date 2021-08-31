@@ -56,6 +56,7 @@ targets = comment_labels
 for train, test in kfold.split(inputs, targets):
 
   x_train, x_val, y_train, y_val = train_test_split(inputs[train], targets[train], test_size=0.1, random_state=0, shuffle=True)
+  x_train, y_train = apply_oversampling(x_train, y_train);
   x_test = inputs[test]
   y_test = targets[test]
 
