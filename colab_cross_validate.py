@@ -78,7 +78,7 @@ for train, test in kfold.split(inputs, targets):
     pretrain_vec=embedding_matrix)
 
   model = ensemble_capsule_network.ensemble_capsule_network(config)
-  model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=1)
+  model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=100)
 
   # validate model
 
