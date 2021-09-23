@@ -32,7 +32,7 @@ comment_labels = pd.get_dummies(comment_labels).values
 print("Shape of all comments: ", padded_docs.shape)
 print("Shape of labels: ", comment_labels.shape)
 
-X_train, X_test, Y_train, Y_test = train_test_split(padded_docs, comment_labels, test_size=0.1, random_state=0, shuffle=True)
+X_train, X_test, Y_train, Y_test = train_test_split(padded_docs[:100], comment_labels[:100], test_size=0.1, random_state=0, shuffle=True)
 x_train, x_val, y_train, y_val = train_test_split(X_train, Y_train, test_size=0.1, random_state=0, shuffle=True)
 x_train, y_train = apply_oversampling(x_train, y_train);
 x_test = X_test
@@ -52,7 +52,7 @@ config = Config(
     num_classes=NO_OUTPUT_LAYERS,
     vocab_size=vocab_size,
     embedding_size=EMBEDDING_SIZE,
-    dropout_rate=0.8,
+    # dropout_rate=0.8,
     x_train=x_train,
     y_train=y_train,
     x_test=x_val,
@@ -60,7 +60,7 @@ config = Config(
     pretrain_vec=embedding_matrix)
 
 model = ensemble_capsule_network.ensemble_capsule_network(config)
-model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=100)
+model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=config.epochs, batch_size=config.batch_size)
 
 # validate model
 
