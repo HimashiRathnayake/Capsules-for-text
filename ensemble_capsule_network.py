@@ -3,6 +3,7 @@ from tensorflow.keras import layers
 import tensorflow.keras.backend as K
 from tensorflow.python.keras.regularizers import l2
 from sklearn.metrics import f1_score
+from tensorflow.keras.optimizers import Adadelta, Adam, SGD, RMSprop, Adagrad, Adamax, Nadam
 
 from config import Config
 from routing import Routing, CapsuleNorm
@@ -117,9 +118,13 @@ def ensemble_capsule_network(self):
 
     model.summary()
 
+    if (self.optimizer=="Adam"):
+      optimizer=Adam(self.init_lr, beta_1=0.7, beta_2=0.999,amsgrad=True)
+    else:
+      optimizer=self.optimizer
+
     model.compile(loss='categorical_crossentropy',
-                  optimizer=tf.keras.optimizers.Adam(self.init_lr, beta_1=0.7, beta_2=0.999,
-                                                     amsgrad=True), metrics=['accuracy'],
+                  optimizer=optimizer,
                   weighted_metrics=['accuracy'])
     return model
 
