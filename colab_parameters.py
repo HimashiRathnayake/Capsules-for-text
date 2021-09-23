@@ -19,7 +19,7 @@ elif technique == "hate speech":
 
 # MAX_FEATURES = EMBEDDING_MATRIX.shape[0] #vocab_size
 # VERBOSITY = 1
-# VALIDATION_SPLIT = 0.1
+VALIDATION_SPLIT = 0.1
 # NB_EPOCHS = 10
 # FOLDS = 5 #10
 # BATCH_SIZE = 32 # 64, 128
