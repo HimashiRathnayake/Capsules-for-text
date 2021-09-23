@@ -1,12 +1,12 @@
 # user parameters
 
 Host = "colab" #@param ["colab", "AWS", "GCP"]
-technique = "hate speech" #@param ["humor", "hate speech"]
+technique = "humor" #@param ["humor", "hate speech"]
 EMBEDDING_SIZE = 300 #@param [50, 150, 200, 250, 300, 350, 400, 450, 500]
 embedding_type = "fasttext" #@param ["fasttext","word2vec"]
 experiment_no = "01" #@param [] {allow-input: true}
 over_sampling_technique = "ROS" #@param ["", "ROS","ADASYN", "SMOTE", "BorderlineSMOTE"]
-sampling_strategy = "0.25:0.25:1" #@param [] {allow-input: true}
+sampling_strategy = "0.5" #@param [] {allow-input: true}
 
 # other parameters
 
@@ -18,18 +18,18 @@ elif technique == "hate speech":
   tag_set = ["Abusive", "Hate-Inducing", "Not offensive"]
 
 # MAX_FEATURES = EMBEDDING_MATRIX.shape[0] #vocab_size
-VERBOSITY = 1
-VALIDATION_SPLIT = 0.1
-NB_EPOCHS = 10
-FOLDS = 5 #10
-BATCH_SIZE = 32 # 64, 128
-NB_FILTERS = 200
-FILTER_LENGTH = 4 # test with 2,3,4,5
-HIDDEN_DIMS = NB_FILTERS * 2
-# MAX_LEN = max_length #275 #test with other values(only this value work for now)
-DROPOUT_VALUE_1 = 0.5 #0.8 #0.3
-DROPOUT_VALUE_2 = 0.5
-L2_REG= 0.01
+# VERBOSITY = 1
+# VALIDATION_SPLIT = 0.1
+# NB_EPOCHS = 10
+# FOLDS = 5 #10
+# BATCH_SIZE = 32 # 64, 128
+# NB_FILTERS = 200
+# FILTER_LENGTH = 4 # test with 2,3,4,5
+# HIDDEN_DIMS = NB_FILTERS * 2
+# # MAX_LEN = max_length #275 #test with other values(only this value work for now)
+# DROPOUT_VALUE_1 = 0.5 #0.8 #0.3
+# DROPOUT_VALUE_2 = 0.5
+# L2_REG= 0.01
 
 # folder paths
 
