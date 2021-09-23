@@ -1,139 +1,102 @@
-import tensorflow as tf
-from tensorflow.keras import layers
-import tensorflow.keras.backend as K
-from tensorflow.python.keras.regularizers import l2
-from sklearn.metrics import f1_score
-from tensorflow.keras.optimizers import Adadelta, Adam, SGD, RMSprop, Adagrad, Adamax, Nadam
-
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix,precision_recall_fscore_support
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras import utils
+import ensemble_capsule_network
 from config import Config
-from routing import Routing, CapsuleNorm
+from preprocessing import text_preprocessing, load_word_embedding_matrix, generate_embedding_matrix
+from network import get_capsule_network_model
+from colab_methods import load_data, apply_oversampling
+from colab_parameters import *
+import hyperopt
+from hyperopt import hp, tpe, fmin, STATUS_OK, Trials
+import warnings
 
+all_data = load_data()
 
+comments_text, labels = text_preprocessing(all_data)
+t = Tokenizer()
+t.fit_on_texts(comments_text)
+vocab_size = len(t.word_index) + 1
+print(vocab_size)
 
-def capsule_layer(self, input_tokens, filter_ensemble_size=3):
-    if self.routing:
-        use_routing = True
-    else:
-        use_routing = False
+encoded_docs = t.texts_to_sequences(comments_text)
+# max_length = 30
+max_length = len(max(encoded_docs, key=len))
+padded_docs = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
+padded_docs = np.array(padded_docs)
+comment_labels = np.array(labels)
+comment_labels = pd.get_dummies(comment_labels).values
 
-    # input_tokens = layers.Input((self.sequence_length,))
-    embedding = layers.Embedding(self.vocab_size, self.embedding_size,
-                                 weights=[self.pretrain_vec],
-                                 trainable=False,
-                                 mask_zero=True)(input_tokens)
-    embedding = layers.Lambda(lambda x: K.expand_dims(x, axis=-1))(embedding)
+embedding_matrix = load_word_embedding_matrix(embedding_matrix_path)
 
-    # non-linear gate layer
-    elu_layer = layers.Conv2D(self.num_filter, kernel_size=(filter_ensemble_size, self.embedding_size),
-                              use_bias=False,
-                              kernel_regularizer=l2(self.l2), activation=None)(embedding)
-    elu_layer = layers.BatchNormalization()(elu_layer)
-    elu_layer = layers.Activation('elu')(elu_layer)
+np.random.seed(0)
 
-    conv_layer = layers.Conv2D(self.num_filter, kernel_size=(filter_ensemble_size, self.embedding_size),
-                               use_bias=False,
-                               kernel_regularizer=l2(self.l2), activation=None)(embedding)
-    conv_layer = layers.BatchNormalization()(conv_layer)
+space = {
+    # 'init_lr': hp.choice('init_lr', [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 0.95]), # 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95
+    'dropout_ratio': hp.choice('dropout_ratio', [0.8]), 
+    'batch_size': hp.choice('batch_size', [64]),
+    'epochs': hp.choice('epochs', [10]),
+    'l2': hp.choice('l2', [0.002]),
+    'optimizer': hp.choice('optimizer', ['Adamax']) 
+}
 
-    gate_layer = layers.Multiply()([elu_layer, conv_layer])
+x_train, x_test, y_train, y_test = train_test_split(padded_docs, comment_labels, test_size=VALIDATION_SPLIT*2, random_state=0)
+x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=VALIDATION_SPLIT, random_state=0)
+x_train, y_train = apply_oversampling(x_train, y_train);
 
-    # dropout
-    gate_layer = layers.Dropout(self.dropout_ratio)(gate_layer)
+trials = Trials()
 
-    # convolutional capsule layer
-    h_i = layers.Conv2D(128 * 8,
-                        kernel_size=(K.int_shape(gate_layer)[1], 1),
-                        use_bias=False,
-                        kernel_regularizer=l2(self.l2), activation=None)(gate_layer)
-    h_i = layers.Reshape((128, 8))(h_i)
-    h_i = layers.BatchNormalization()(h_i)
+def objective(params):
 
-    h_i = layers.Activation('relu')(h_i)
+    print({'params': params})
 
-    # dropout
-    h_i = layers.Dropout(self.dropout_ratio)(h_i)
+    config = Config(
+        seq_len=max_length,
+        num_classes=NO_OUTPUT_LAYERS,
+        vocab_size=vocab_size,
+        embedding_size=EMBEDDING_SIZE,
+        # init_lr=params["init_lr"],
+        dropout_ratio=params["dropout_ratio"],
+        batch_size=params["batch_size"],
+        epochs=params["epochs"],
+        l2=params["l2"],
+        optimizer=params["optimizer"],
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_val,
+        y_test=y_val,
+        pretrain_vec=embedding_matrix
+      )
 
-    # routing algorithm
-    text_caps = Routing(num_capsule=16,
-                        l2_constant=self.l2,
-                        dim_capsule=16,
-                        routing=True,
-                        num_routing=3)(h_i)
-    # text_caps = Routing(num_capsule=8,
-    #                     l2_constant=self.l2,
-    #                     dim_capsule=12,
-    #                     routing=True,
-    #                     num_routing=3)(text_caps)
+    model = ensemble_capsule_network.ensemble_capsule_network(config)
+    model.fit(x=x_train, y=y_train, validation_data=(x_val, y_val), epochs=config.epochs, batch_size=config.batch_size)
 
-    text_caps = Routing(num_capsule=self.num_classes,
-                        l2_constant=self.l2,
-                        dim_capsule=16,
-                        routing=True,
-                        num_routing=3)(text_caps)
+    predictions = model.predict(x_test)
+    labels = np.argmax(y_test, axis=1)
+    predictions = np.argmax(predictions, axis=1)
 
-    output = CapsuleNorm()(text_caps)
+    ret = {'loss': - f1_score(labels, predictions, average='macro'),'params': params, 'status': STATUS_OK}
+    print("Current Trial", ret)
+    print("Completed Trials:", trials.results)
 
-    # model = tf.keras.Model(input_tokens, output, name='text-capsnet')
-    #
-    # if summary:
-    #     model.summary()
-    #
-    # # compile model
-    # model.compile(loss='categorical_crossentropy',
-    #               optimizer=tf.keras.optimizers.Adam(self.init_lr, beta_1=0.7, beta_2=0.999, amsgrad=True),
-    #               metrics=['accuracy'])
+    return ret
 
-    return output
+# Run optimization - Random search.
+def tune_hyperparameres():
+  best = fmin(
+      fn = objective, 
+      space = space, 
+      algo = tpe.rand.suggest,
+      max_evals = 1, 
+      trials = trials, 
+      verbose = 0
+  )
+  print(best)
+  print(hyperopt.space_eval(space, best))
 
+tune_hyperparameres()
 
-def recall_m(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
-
-
-def precision_m(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
-
-
-def f1_m(y_true, y_pred):
-    precision = precision_m(y_true, y_pred)
-    recall = recall_m(y_true, y_pred)
-    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
-
-# @tf.function
-def ensemble_capsule_network(self):
-    input_tokens = layers.Input((self.sequence_length,))
-    output1 = capsule_layer(self, input_tokens, filter_ensemble_size=3)
-    output2 = capsule_layer(self, input_tokens, filter_ensemble_size=4)
-    output3 = capsule_layer(self, input_tokens, filter_ensemble_size=5)
-    output = tf.convert_to_tensor([output1, output2, output3])
-    output = tf.reduce_mean(output, axis=0)
-
-    model = tf.keras.Model(input_tokens, output, name='text-capsnet')
-
-    model.summary()
-
-    if (self.optimizer=="Adam"):
-      optimizer=Adam(self.init_lr, beta_1=0.7, beta_2=0.999,amsgrad=True)
-    elif (self.optimizer=="Adadelta"):
-      optimizer=Adam(0.95)
-    elif (self.optimizer=="Adagrad"):
-      optimizer=Adam(0.95)
-    else:
-      optimizer=self.optimizer
-
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=optimizer,
-                  weighted_metrics=['accuracy'])
-    return model
-
-
-# w2v = tf.random.normal([30_000, 300])
-# config = Config(pretrain_vec=w2v)
-# print("Hi")
-# model = ensemble_capsule_network(config)
