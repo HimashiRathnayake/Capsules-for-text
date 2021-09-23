@@ -120,6 +120,10 @@ def ensemble_capsule_network(self):
 
     if (self.optimizer=="Adam"):
       optimizer=Adam(self.init_lr, beta_1=0.7, beta_2=0.999,amsgrad=True)
+    elif (self.optimizer=="Adadelta"):
+      optimizer=Adam(0.95)
+    elif (self.optimizer=="Adagrad"):
+      optimizer=Adam(0.95)
     else:
       optimizer=self.optimizer
 
