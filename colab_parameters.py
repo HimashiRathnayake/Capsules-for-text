@@ -17,11 +17,11 @@ elif technique == "hate speech":
   NO_OUTPUT_LAYERS = 3
   tag_set = ["Abusive", "Hate-Inducing", "Not offensive"]
 
-# MAX_FEATURES = EMBEDDING_MATRIX.shape[0] #vocab_size
-# VERBOSITY = 1
+MAX_FEATURES = EMBEDDING_MATRIX.shape[0] #vocab_size
+VERBOSITY = 1
 VALIDATION_SPLIT = 0.1
 # NB_EPOCHS = 10
-# FOLDS = 5 #10
+FOLDS = 5 #10
 # BATCH_SIZE = 32 # 64, 128
 # NB_FILTERS = 200
 # FILTER_LENGTH = 4 # test with 2,3,4,5
