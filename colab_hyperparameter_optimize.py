@@ -45,7 +45,7 @@ space = {
     'optimizer': hp.choice('optimizer', ['SGD']) # 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam'
 }
 
-x_train, x_test, y_train, y_test = train_test_split(padded_docs[:100], comment_labels[:100], test_size=VALIDATION_SPLIT*2, random_state=0)
+x_train, x_test, y_train, y_test = train_test_split(padded_docs, comment_labels, test_size=VALIDATION_SPLIT*2, random_state=0)
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=VALIDATION_SPLIT, random_state=0)
 x_train, y_train = apply_oversampling(x_train, y_train);
 
