@@ -37,12 +37,12 @@ embedding_matrix = load_word_embedding_matrix(embedding_matrix_path)
 np.random.seed(0)
 
 space = {
-    # 'init_lr': hp.choice('init_lr', [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 0.95]), # 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95
-    'dropout_ratio': hp.choice('dropout_ratio', [0.8]), # 0.3, 0.5
+    'init_lr': hp.choice('init_lr', [0.001, 0.01, 0.05, 0.1, 0.5, 0.95]),
+    'dropout_ratio': hp.choice('dropout_ratio', [0.3, 0.5, 0.8]),
     'batch_size': hp.choice('batch_size', [32]),
     'epochs': hp.choice('epochs', [50]),
-    'l2': hp.choice('l2', [0.002]), # 0.001, 0.01, 0.02
-    'optimizer': hp.choice('optimizer', ['SGD']) # 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam'
+    'l2': hp.choice('l2', [0.001, 0.002, 0.01, 0.02]),
+    'optimizer': hp.choice('optimizer', ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam'])
 }
 
 x_train, x_test, y_train, y_test = train_test_split(padded_docs, comment_labels, test_size=VALIDATION_SPLIT*2, random_state=0)
@@ -60,7 +60,7 @@ def objective(params):
         num_classes=NO_OUTPUT_LAYERS,
         vocab_size=vocab_size,
         embedding_size=EMBEDDING_SIZE,
-        # init_lr=params["init_lr"],
+        init_lr=params["init_lr"],
         dropout_ratio=params["dropout_ratio"],
         batch_size=params["batch_size"],
         epochs=params["epochs"],
